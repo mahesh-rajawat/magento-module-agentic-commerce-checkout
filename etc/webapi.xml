@@ -1,0 +1,75 @@
+<?xml version="1.0"?>
+<routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Webapi:etc/webapi.xsd">
+
+    <!-- ── Catalog ─────────────────────────────────────────────────────── -->
+    <route url="/V1/ucp/catalog" method="GET">
+        <service class="MSR\AgenticUcpCheckout\Api\UcpCatalogInterface" method="browse"/>
+        <resources><resource ref="anonymous"/></resources>
+    </route>
+
+    <route url="/V1/ucp/search" method="GET">
+        <service class="MSR\AgenticUcpCheckout\Api\UcpCatalogInterface" method="search"/>
+        <resources><resource ref="anonymous"/></resources>
+    </route>
+
+    <!-- ── Cart ────────────────────────────────────────────────────────── -->
+    <route url="/V1/ucp/cart" method="GET">
+        <service class="MSR\AgenticUcpCheckout\Api\UcpCartInterface" method="view"/>
+        <resources><resource ref="anonymous"/></resources>
+    </route>
+
+    <route url="/V1/ucp/cart" method="POST">
+        <service class="MSR\AgenticUcpCheckout\Api\UcpCartInterface" method="addItem"/>
+        <resources><resource ref="anonymous"/></resources>
+    </route>
+
+    <route url="/V1/ucp/cart/:itemId" method="DELETE">
+        <service class="MSR\AgenticUcpCheckout\Api\UcpCartInterface" method="removeItem"/>
+        <resources><resource ref="anonymous"/></resources>
+    </route>
+
+    <route url="/V1/ucp/cart" method="DELETE">
+        <service class="MSR\AgenticUcpCheckout\Api\UcpCartInterface" method="clear"/>
+        <resources><resource ref="anonymous"/></resources>
+    </route>
+
+    <!-- ── Checkout ─────────────────────────────────────────────────────── -->
+    <route url="/V1/ucp/checkout/shipping" method="POST">
+        <service class="MSR\AgenticUcpCheckout\Api\UcpCheckoutInterface" method="setShipping"/>
+        <resources><resource ref="anonymous"/></resources>
+    </route>
+
+    <route url="/V1/ucp/checkout/shipping-methods" method="GET">
+        <service class="MSR\AgenticUcpCheckout\Api\UcpCheckoutInterface" method="getShippingMethods"/>
+        <resources><resource ref="anonymous"/></resources>
+    </route>
+
+    <route url="/V1/ucp/checkout/payment-methods" method="GET">
+        <service class="MSR\AgenticUcpCheckout\Api\UcpCheckoutInterface" method="getPaymentMethods"/>
+        <resources><resource ref="anonymous"/></resources>
+    </route>
+
+    <route url="/V1/ucp/checkout/totals" method="GET">
+        <service class="MSR\AgenticUcpCheckout\Api\UcpCheckoutInterface" method="getTotals"/>
+        <resources><resource ref="anonymous"/></resources>
+    </route>
+
+    <!-- ── Order ────────────────────────────────────────────────────────── -->
+    <route url="/V1/ucp/order" method="POST">
+        <service class="MSR\AgenticUcpCheckout\Api\UcpOrderInterface" method="place"/>
+        <resources><resource ref="anonymous"/></resources>
+    </route>
+
+    <route url="/V1/ucp/order/:orderId" method="GET">
+        <service class="MSR\AgenticUcpCheckout\Api\UcpOrderInterface" method="track"/>
+        <resources><resource ref="anonymous"/></resources>
+    </route>
+
+    <!-- ── Inventory ────────────────────────────────────────────────────── -->
+    <route url="/V1/ucp/inventory" method="GET">
+        <service class="MSR\AgenticUcpCheckout\Api\UcpInventoryInterface" method="query"/>
+        <resources><resource ref="anonymous"/></resources>
+    </route>
+
+</routes>
