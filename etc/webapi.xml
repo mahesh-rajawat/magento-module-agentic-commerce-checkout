@@ -40,6 +40,11 @@
         <resources><resource ref="anonymous"/></resources>
     </route>
 
+    <route url="/V1/ucp/checkout/billing" method="POST">
+        <service class="MSR\AgenticUcpCheckout\Api\UcpCheckoutInterface" method="setBilling"/>
+        <resources><resource ref="anonymous"/></resources>
+    </route>
+
     <route url="/V1/ucp/checkout/shipping-methods" method="GET">
         <service class="MSR\AgenticUcpCheckout\Api\UcpCheckoutInterface" method="getShippingMethods"/>
         <resources><resource ref="anonymous"/></resources>

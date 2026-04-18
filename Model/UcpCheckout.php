@@ -1,18 +1,15 @@
 <?php
-
-
 declare(strict_types=1);
 
 namespace MSR\AgenticUcpCheckout\Model;
 
 use Magento\Quote\Api\CartRepositoryInterface;
-use Magento\Quote\Api\PaymentMethodManagementInterface;
 use Magento\Quote\Api\ShippingMethodManagementInterface;
-use Magento\Quote\Model\Quote;
+use Magento\Quote\Api\PaymentMethodManagementInterface;
+use Magento\Quote\Api\CartTotalRepositoryInterface;
+use Magento\Quote\Model\Quote\Address;
 use MSR\AgenticUcpCheckout\Api\UcpCheckoutInterface;
-/**
- * Manages UCP agent checkout flow: shipping, payment, and totals.
- */
+use MSR\AgenticUcpCheckout\Model\UcpCart;
 
 class UcpCheckout implements UcpCheckoutInterface
 {
@@ -21,8 +18,8 @@ class UcpCheckout implements UcpCheckoutInterface
         private readonly CartRepositoryInterface           $cartRepository,
         private readonly ShippingMethodManagementInterface $shippingMethodManagement,
         private readonly PaymentMethodManagementInterface  $paymentMethodManagement,
-    ) {
-    }
+        private readonly CartTotalRepositoryInterface      $cartTotalRepository,
+    ) {}
 
     public function setShipping(
         string $firstname,
@@ -33,7 +30,8 @@ class UcpCheckout implements UcpCheckoutInterface
         string $postcode,
         string $countryId,
         string $telephone,
-        string $shippingMethodCode
+        string $shippingMethodCode,
+        bool   $billingSameAsShipping = true
     ): array {
         $quote = $this->ucpCart->getOrCreateQuote();
 
@@ -41,34 +39,80 @@ class UcpCheckout implements UcpCheckoutInterface
             return ['status' => 'error', 'message' => 'Cart is empty. Add items before setting shipping.'];
         }
 
-        // Build address
-        $address = $quote->getShippingAddress();
-        $address->setFirstname($firstname)
-                ->setLastname($lastname)
-                ->setStreet([$street])
-                ->setCity($city)
-                ->setRegionCode($regionCode)
-                ->setPostcode($postcode)
-                ->setCountryId($countryId)
-                ->setTelephone($telephone)
-                ->setEmail($quote->getCustomerEmail() ?? 'agent@ucp.local');
+        $addressData = [
+            'firstname'   => $firstname,
+            'lastname'    => $lastname,
+            'street'      => [$street],
+            'city'        => $city,
+            'region_code' => $regionCode,
+            'postcode'    => $postcode,
+            'country_id'  => $countryId,
+            'telephone'   => $telephone,
+            'email'       => $quote->getCustomerEmail() ?? 'agent@ucp.local',
+        ];
 
-        // Set same address for billing
-        $quote->getBillingAddress()->addData($address->getData());
+        // Set shipping address
+        $shipping = $quote->getShippingAddress();
+        $shipping->addData($addressData);
+        $shipping->setShippingMethod($shippingMethodCode)
+            ->setCollectShippingRates(true)
+            ->collectShippingRates();
 
-        // Parse shipping method (format: "carrier_method") — validated by Magento's rate collection
-        $address->setShippingMethod($shippingMethodCode)
-                ->setCollectShippingRates(true)
-                ->collectShippingRates();
+        // Billing — same as shipping by default
+        if ($billingSameAsShipping) {
+            $billing = $quote->getBillingAddress();
+            $billing->addData($addressData);
+            $billing->setSameAsBilling(1);
+        }
 
         $quote->setTotalsCollectedFlag(false)->collectTotals();
         $this->cartRepository->save($quote);
 
         return [
-            'status'          => 'ok',
-            'message'         => 'Shipping address and method set.',
-            'shipping_method' => $shippingMethodCode,
-            'totals'          => $this->formatTotals($quote),
+            'status'                   => 'ok',
+            'message'                  => 'Shipping address and method set.'
+                . ($billingSameAsShipping ? ' Billing set to same as shipping.' : ''),
+            'shipping_method'          => $shippingMethodCode,
+            'billing_same_as_shipping' => $billingSameAsShipping,
+            'totals'                   => $this->formatTotals($quote),
+        ];
+    }
+
+    /**
+     * Set a separate billing address (when different from shipping).
+     */
+    public function setBilling(
+        string $firstname,
+        string $lastname,
+        string $street,
+        string $city,
+        string $regionCode,
+        string $postcode,
+        string $countryId,
+        string $telephone
+    ): array {
+        $quote = $this->ucpCart->getOrCreateQuote();
+
+        $billing = $quote->getBillingAddress();
+        $billing->addData([
+            'firstname'   => $firstname,
+            'lastname'    => $lastname,
+            'street'      => [$street],
+            'city'        => $city,
+            'region_code' => $regionCode,
+            'postcode'    => $postcode,
+            'country_id'  => $countryId,
+            'telephone'   => $telephone,
+            'email'       => $quote->getCustomerEmail() ?? 'agent@ucp.local',
+        ]);
+        $billing->setSameAsBilling(0);
+
+        $quote->setTotalsCollectedFlag(false)->collectTotals();
+        $this->cartRepository->save($quote);
+
+        return [
+            'status'  => 'ok',
+            'message' => 'Billing address set.',
         ];
     }
 
@@ -137,7 +181,7 @@ class UcpCheckout implements UcpCheckoutInterface
         ];
     }
 
-    private function formatTotals(Quote $quote): array
+    private function formatTotals(\Magento\Quote\Model\Quote $quote): array
     {
         return [
             'subtotal'          => (float)$quote->getSubtotal(),

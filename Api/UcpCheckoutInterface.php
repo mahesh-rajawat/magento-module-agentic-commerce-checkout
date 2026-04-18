@@ -1,5 +1,4 @@
 <?php
-
 declare(strict_types=1);
 
 namespace MSR\AgenticUcpCheckout\Api;
@@ -18,6 +17,7 @@ interface UcpCheckoutInterface
      * @param string $countryId
      * @param string $telephone
      * @param string $shippingMethodCode  e.g. "flatrate_flatrate"
+     * @param bool   $billingSameAsShipping  true = copy shipping to billing (default)
      * @return mixed[]
      */
     public function setShipping(
@@ -29,7 +29,32 @@ interface UcpCheckoutInterface
         string $postcode,
         string $countryId,
         string $telephone,
-        string $shippingMethodCode
+        string $shippingMethodCode,
+        bool   $billingSameAsShipping = true
+    ): array;
+
+    /**
+     * Set a separate billing address (only needed when different from shipping).
+     *
+     * @param string $firstname
+     * @param string $lastname
+     * @param string $street
+     * @param string $city
+     * @param string $regionCode
+     * @param string $postcode
+     * @param string $countryId
+     * @param string $telephone
+     * @return mixed[]
+     */
+    public function setBilling(
+        string $firstname,
+        string $lastname,
+        string $street,
+        string $city,
+        string $regionCode,
+        string $postcode,
+        string $countryId,
+        string $telephone
     ): array;
 
     /**
