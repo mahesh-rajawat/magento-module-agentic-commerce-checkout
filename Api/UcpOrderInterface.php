@@ -7,6 +7,7 @@ interface UcpOrderInterface
 {
     /**
      * Place the order from the active cart.
+     *
      * Requires X-UCP-Human-Confirmation header (policy middleware checks this).
      *
      * @param string $paymentMethodCode  e.g. "checkmo" or "stripe"

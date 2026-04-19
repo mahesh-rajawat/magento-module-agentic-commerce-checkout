@@ -21,6 +21,14 @@ use MSR\AgenticUcpCheckout\Model\Cart\SessionManager;
  */
 class UcpCart implements UcpCartInterface
 {
+    /**
+     * @param GuestCartManagementInterface $guestCartManagement
+     * @param GuestCartRepositoryInterface $guestCartRepository
+     * @param CartRepositoryInterface $cartRepository
+     * @param ProductRepositoryInterface $productRepository
+     * @param StoreManagerInterface $storeManager
+     * @param SessionManager $sessionManager
+     */
     public function __construct(
         private readonly GuestCartManagementInterface $guestCartManagement,
         private readonly GuestCartRepositoryInterface $guestCartRepository,
@@ -28,14 +36,27 @@ class UcpCart implements UcpCartInterface
         private readonly ProductRepositoryInterface   $productRepository,
         private readonly StoreManagerInterface        $storeManager,
         private readonly SessionManager               $sessionManager,
-    ) {}
+    ) {
+    }
 
+    /**
+     * Return the current cart contents.
+     *
+     * @return array
+     */
     public function view(): array
     {
         $quote = $this->getOrCreateQuote();
         return $this->formatCart($quote);
     }
 
+    /**
+     * Add a product to the cart by SKU.
+     *
+     * @param string $sku
+     * @param int $qty
+     * @return array
+     */
     public function addItem(string $sku, int $qty = 1): array
     {
         try {
@@ -64,6 +85,12 @@ class UcpCart implements UcpCartInterface
         ];
     }
 
+    /**
+     * Remove an item from the cart by item ID.
+     *
+     * @param int $itemId
+     * @return array
+     */
     public function removeItem(int $itemId): array
     {
         $quote = $this->getOrCreateQuote();
@@ -84,6 +111,11 @@ class UcpCart implements UcpCartInterface
         ];
     }
 
+    /**
+     * Remove all items from the cart.
+     *
+     * @return array
+     */
     public function clear(): array
     {
         $quote = $this->getOrCreateQuote();
@@ -99,8 +131,11 @@ class UcpCart implements UcpCartInterface
         ];
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
-
+    /**
+     * Get the existing agent cart quote or create a new guest cart.
+     *
+     * @return Quote
+     */
     public function getOrCreateQuote(): Quote
     {
         $maskedId = $this->sessionManager->getMaskedCartId();
@@ -108,7 +143,7 @@ class UcpCart implements UcpCartInterface
         if ($maskedId) {
             try {
                 return $this->guestCartRepository->get($maskedId);
-            } catch (NoSuchEntityException) {
+            } catch (NoSuchEntityException) { // phpcs:ignore Magento2.CodeAnalysis.EmptyBlock
                 // Cart expired — create a new one
             }
         }
@@ -124,6 +159,12 @@ class UcpCart implements UcpCartInterface
         return $quote;
     }
 
+    /**
+     * Format a quote as a cart summary array.
+     *
+     * @param Quote $quote
+     * @return array
+     */
     public function formatCart(Quote $quote): array
     {
         $items = [];

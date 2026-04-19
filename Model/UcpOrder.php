@@ -1,32 +1,48 @@
 <?php
 
-
 declare(strict_types=1);
 
 namespace MSR\AgenticUcpCheckout\Model;
 
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Quote\Api\GuestCartManagementInterface;
+use Magento\Quote\Model\QuoteManagement;
 use Magento\Sales\Api\OrderRepositoryInterface;
 use Magento\Sales\Model\ResourceModel\Order\CollectionFactory as OrderCollectionFactory;
 use MSR\AgenticUcpCheckout\Api\UcpOrderInterface;
 use MSR\AgenticUcpCheckout\Model\Cart\SessionManager;
 use MSR\AgenticUcpCheckout\Model\UcpCart;
+
 /**
  * Handles UCP agent order placement and tracking.
  */
-
 class UcpOrder implements UcpOrderInterface
 {
+    /**
+     * @param UcpCart $ucpCart
+     * @param SessionManager $sessionManager
+     * @param GuestCartManagementInterface $guestCartManagement
+     * @param OrderRepositoryInterface $orderRepository
+     * @param OrderCollectionFactory $orderCollectionFactory
+     */
     public function __construct(
         private readonly UcpCart                      $ucpCart,
         private readonly SessionManager               $sessionManager,
         private readonly GuestCartManagementInterface $guestCartManagement,
         private readonly OrderRepositoryInterface     $orderRepository,
         private readonly OrderCollectionFactory       $orderCollectionFactory,
-    ) {}
+    ) {
+    }
 
-    public function place(string $paymentMethodCode, string $email): array
+    /**
+     * Place an order for the current agent cart.
+     *
+     * @param string $paymentMethodCode
+     * @param string $email
+     * @param array $paymentData
+     * @return array
+     */
+    public function place(string $paymentMethodCode, string $email, array  $paymentData = []): array
     {
         $quote = $this->ucpCart->getOrCreateQuote();
 
@@ -41,17 +57,21 @@ class UcpOrder implements UcpOrderInterface
         // Set guest email
         $quote->setCustomerEmail($email)
               ->setCustomerIsGuest(true)
-              ->setCheckoutMethod('guest'); // \Magento\Quote\Model\QuoteManagement::METHOD_GUEST
+              ->setCheckoutMethod(QuoteManagement::METHOD_GUEST);
 
         // Set payment method
-        $quote->getPayment()->setMethod($paymentMethodCode);
+        $payment = $quote->getPayment();
+        $payment->setMethod($paymentMethodCode);
+        if (!empty($paymentData)) {
+            $payment->setAdditionalInformation($paymentData);
+        }
 
         try {
             $maskedId = $this->sessionManager->getMaskedCartId();
             $orderId  = $this->guestCartManagement->placeOrder($maskedId);
             $order    = $this->orderRepository->get($orderId);
 
-            // Clear the agent's cart after successful order
+            // Clear the agent's cart after a successful order
             $this->sessionManager->clearCart();
 
             return [
@@ -73,6 +93,12 @@ class UcpOrder implements UcpOrderInterface
         }
     }
 
+    /**
+     * Track an order by numeric ID or increment ID.
+     *
+     * @param string $orderId
+     * @return array
+     */
     public function track(string $orderId): array
     {
         // Support both numeric ID and increment ID (e.g. "000000001")

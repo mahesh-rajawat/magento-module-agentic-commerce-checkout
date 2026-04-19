@@ -16,8 +16,8 @@ interface UcpCheckoutInterface
      * @param string $postcode
      * @param string $countryId
      * @param string $telephone
-     * @param string $shippingMethodCode  e.g. "flatrate_flatrate"
-     * @param bool   $billingSameAsShipping  true = copy shipping to billing (default)
+     * @param string $shippingMethodCode
+     * @param bool $billingSameAsShipping
      * @return mixed[]
      */
     public function setShipping(

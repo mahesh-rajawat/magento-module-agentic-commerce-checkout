@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace MSR\AgenticUcpCheckout\Model;
@@ -11,16 +12,42 @@ use Magento\Quote\Model\Quote\Address;
 use MSR\AgenticUcpCheckout\Api\UcpCheckoutInterface;
 use MSR\AgenticUcpCheckout\Model\UcpCart;
 
+/**
+ * Handles UCP agent checkout — shipping, billing, and payment method selection.
+ */
 class UcpCheckout implements UcpCheckoutInterface
 {
+    /**
+     * @param UcpCart $ucpCart
+     * @param CartRepositoryInterface $cartRepository
+     * @param ShippingMethodManagementInterface $shippingMethodManagement
+     * @param PaymentMethodManagementInterface $paymentMethodManagement
+     * @param CartTotalRepositoryInterface $cartTotalRepository
+     */
     public function __construct(
         private readonly UcpCart                           $ucpCart,
         private readonly CartRepositoryInterface           $cartRepository,
         private readonly ShippingMethodManagementInterface $shippingMethodManagement,
         private readonly PaymentMethodManagementInterface  $paymentMethodManagement,
         private readonly CartTotalRepositoryInterface      $cartTotalRepository,
-    ) {}
+    ) {
+    }
 
+    /**
+     * Set the shipping address and method on the agent cart.
+     *
+     * @param string $firstname
+     * @param string $lastname
+     * @param string $street
+     * @param string $city
+     * @param string $regionCode
+     * @param string $postcode
+     * @param string $countryId
+     * @param string $telephone
+     * @param string $shippingMethodCode
+     * @param bool $billingSameAsShipping
+     * @return array
+     */
     public function setShipping(
         string $firstname,
         string $lastname,
@@ -40,15 +67,15 @@ class UcpCheckout implements UcpCheckoutInterface
         }
 
         $addressData = [
-            'firstname'   => $firstname,
-            'lastname'    => $lastname,
-            'street'      => [$street],
-            'city'        => $city,
-            'region_code' => $regionCode,
-            'postcode'    => $postcode,
+            'firstname' => $firstname,
+            'lastname' => $lastname,
+            'street' => [$street],
+            'city' => $city,
+            'region_id' => $regionCode,
+            'postcode' => $postcode,
             'country_id'  => $countryId,
-            'telephone'   => $telephone,
-            'email'       => $quote->getCustomerEmail() ?? 'agent@ucp.local',
+            'telephone' => $telephone,
+            'email' => $quote->getCustomerEmail() ?? 'agent@ucp.local',
         ];
 
         // Set shipping address
@@ -80,6 +107,16 @@ class UcpCheckout implements UcpCheckoutInterface
 
     /**
      * Set a separate billing address (when different from shipping).
+     *
+     * @param string $firstname
+     * @param string $lastname
+     * @param string $street
+     * @param string $city
+     * @param string $regionCode
+     * @param string $postcode
+     * @param string $countryId
+     * @param string $telephone
+     * @return array
      */
     public function setBilling(
         string $firstname,
@@ -99,7 +136,7 @@ class UcpCheckout implements UcpCheckoutInterface
             'lastname'    => $lastname,
             'street'      => [$street],
             'city'        => $city,
-            'region_code' => $regionCode,
+            'region_id' => $regionCode,
             'postcode'    => $postcode,
             'country_id'  => $countryId,
             'telephone'   => $telephone,
@@ -116,6 +153,11 @@ class UcpCheckout implements UcpCheckoutInterface
         ];
     }
 
+    /**
+     * Get available shipping methods for the agent cart.
+     *
+     * @return array
+     */
     public function getShippingMethods(): array
     {
         $quote = $this->ucpCart->getOrCreateQuote();
@@ -146,6 +188,11 @@ class UcpCheckout implements UcpCheckoutInterface
         ];
     }
 
+    /**
+     * Get available payment methods for the agent cart.
+     *
+     * @return array
+     */
     public function getPaymentMethods(): array
     {
         $quote   = $this->ucpCart->getOrCreateQuote();
@@ -165,6 +212,11 @@ class UcpCheckout implements UcpCheckoutInterface
         ];
     }
 
+    /**
+     * Get the current cart totals.
+     *
+     * @return array
+     */
     public function getTotals(): array
     {
         $quote = $this->ucpCart->getOrCreateQuote();
@@ -181,6 +233,12 @@ class UcpCheckout implements UcpCheckoutInterface
         ];
     }
 
+    /**
+     * Format the quote totals as an array.
+     *
+     * @param \Magento\Quote\Model\Quote $quote
+     * @return array
+     */
     private function formatTotals(\Magento\Quote\Model\Quote $quote): array
     {
         return [

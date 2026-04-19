@@ -1,12 +1,11 @@
 <?php
 
-
 declare(strict_types=1);
 
 namespace MSR\AgenticUcpCheckout\Model;
-use Magento\CatalogInventory\Api\StockRegistryInterface;
-use Magento\CatalogInventory\Api\StockRegistryInterface;
+
 use Magento\Catalog\Api\ProductRepositoryInterface;
+use Magento\CatalogInventory\Api\StockRegistryInterface;
 use Magento\Framework\Exception\NoSuchEntityException;
 use MSR\AgenticUcpCheckout\Api\UcpInventoryInterface;
 
@@ -15,11 +14,22 @@ use MSR\AgenticUcpCheckout\Api\UcpInventoryInterface;
  */
 class UcpInventory implements UcpInventoryInterface
 {
+    /**
+     * @param StockRegistryInterface $stockRegistry
+     * @param ProductRepositoryInterface $productRepository
+     */
     public function __construct(
         private readonly StockRegistryInterface    $stockRegistry,
         private readonly ProductRepositoryInterface $productRepository,
-    ) {}
+    ) {
+    }
 
+    /**
+     * Query stock levels for a SKU or comma-separated list of SKUs.
+     *
+     * @param string $sku
+     * @return array
+     */
     public function query(string $sku): array
     {
         // Support comma-separated SKU list
