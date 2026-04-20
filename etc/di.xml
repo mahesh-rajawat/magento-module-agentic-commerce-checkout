@@ -30,5 +30,54 @@
 
     <preference for="MSR\AgenticUcpCheckout\Api\Data\CartSummaryInterface"
                 type="MSR\AgenticUcpCheckout\Model\Data\CartSummary"/>
+    <type name="MSR\AgenticUcp\Controller\Wellknown\Index">
+        <arguments>
+            <argument name="capabilities" xsi:type="array">
+                <item name="dev_ucp_shopping_catalog" xsi:type="array">
+                    <item name="id" xsi:type="string">dev.ucp.shopping.catalog</item>
+                    <item name="config" xsi:type="array">
+                        <item name="browse_endpoint"
+                              xsi:type="string">/rest/V1/ucp/catalog</item>
+                        <item name="search_endpoint"
+                              xsi:type="string">/rest/V1/ucp/search</item>
+                        <item name="inventory_endpoint"
+                              xsi:type="string">/rest/V1/ucp/inventory</item>
+                    </item>
+                </item>
+                <item name="dev_ucp_shopping_checkout" xsi:type="array">
+                    <item name="id" xsi:type="string">dev.ucp.shopping.checkout</item>
+                    <item name="extends" xsi:type="string">dev.ucp.shopping.catalog</item>
+                    <item name="config"  xsi:type="array">
+                        <item name="cart_endpoint"
+                              xsi:type="string">/rest/V1/ucp/cart</item>
+                        <item name="shipping_endpoint"
+                              xsi:type="string">/rest/V1/ucp/checkout/shipping</item>
+                        <item name="billing_endpoint"
+                              xsi:type="string">/rest/V1/ucp/checkout/billing</item>
+                    </item>
+                </item>
+
+                <item name="dev_ucp_shopping_order" xsi:type="array">
+                    <item name="id" xsi:type="string">dev.ucp.shopping.order</item>
+                    <item name="extends" xsi:type="string">dev.ucp.shopping.checkout</item>
+                    <item name="config" xsi:type="array">
+                        <item name="order_endpoint"
+                              xsi:type="string">/rest/V1/ucp/order</item>
+                    </item>
+                </item>
+
+                <item name="dev_ucp_shopping_fulfillment" xsi:type="array">
+                    <item name="id" xsi:type="string">dev.ucp.shopping.fulfillment</item>
+                    <item name="extends" xsi:type="string">dev.ucp.shopping.order</item>
+                    <item name="config"  xsi:type="array">
+                        <item name="tracking_endpoint"
+                              xsi:type="string">/rest/V1/ucp/order/{id}</item>
+                    </item>
+                </item>
+            </argument>
+            <argument name="paymentHandlers" xsi:type="array">
+            </argument>
+        </arguments>
+    </type>
 
 </config>
